@@ -3,8 +3,40 @@ import random
 from datetime import datetime, timedelta
 
 def generate_dummy_data(filename, num_records=1500):
+    estacoes_metro_df = [
+        {"nome": "Central", "lat": -15.7925, "lon": -47.8828},
+        {"nome": "Galeria", "lat": -15.7981, "lon": -47.8856},
+        {"nome": "102 Sul", "lat": -15.8044, "lon": -47.8903},
+        {"nome": "106 Sul", "lat": -15.8164, "lon": -47.8997},
+        {"nome": "108 Sul", "lat": -15.8228, "lon": -47.9042},
+        {"nome": "110 Sul", "lat": -15.8286, "lon": -47.9089},
+        {"nome": "112 Sul", "lat": -15.8347, "lon": -47.9133},
+        {"nome": "114 Sul", "lat": -15.8406, "lon": -47.9181},
+        {"nome": "Terminal Asa Sul", "lat": -15.8483, "lon": -47.9239},
+        {"nome": "Shopping", "lat": -15.8336, "lon": -47.9422},
+        {"nome": "Feira", "lat": -15.8319, "lon": -47.9547},
+        {"nome": "Guará", "lat": -15.8258, "lon": -47.9708},
+        {"nome": "Arniqueiras", "lat": -15.8378, "lon": -48.0169},
+        {"nome": "Águas Claras", "lat": -15.8406, "lon": -48.0264},
+        {"nome": "Concessionárias", "lat": -15.8361, "lon": -48.0381},
+        {"nome": "Estrada Parque", "lat": -15.8333, "lon": -48.0494},
+        {"nome": "Praça do Relógio", "lat": -15.8319, "lon": -48.0569},
+        {"nome": "Centro Metropolitano", "lat": -15.8344, "lon": -48.0772},
+        {"nome": "Ceilândia Sul", "lat": -15.8378, "lon": -48.0933},
+        {"nome": "Guariroba", "lat": -15.8306, "lon": -48.1022},
+        {"nome": "Ceilândia Centro", "lat": -15.8236, "lon": -48.1128},
+        {"nome": "Ceilândia Norte", "lat": -15.8142, "lon": -48.1189},
+        {"nome": "Terminal Ceilândia", "lat": -15.8078, "lon": -48.1258},
+        {"nome": "Taguatinga Sul", "lat": -15.8569, "lon": -48.0336},
+        {"nome": "Furnas", "lat": -15.8672, "lon": -48.0469},
+        {"nome": "Samambaia Sul", "lat": -15.8753, "lon": -48.0817},
+        {"nome": "Terminal Samambaia", "lat": -15.8744, "lon": -48.0964}
+    ]
+
     headers = [
         'timestamp',
+        'estacao',
+        'geolocalizacao',
         'equipamento_id',
         'tipo_equipamento',
         'vibracao',
@@ -28,6 +60,10 @@ def generate_dummy_data(filename, num_records=1500):
 
         for i in range(num_records):
             timestamp = (start_time + timedelta(minutes=5*i)).strftime('%Y-%m-%d %H:%M:%S')
+
+            estacao_escolhida = random.choice(estacoes_metro_df)
+            estacao_nome = estacao_escolhida['nome']
+            geolocalizacao = f"{estacao_escolhida['lat']},{estacao_escolhida['lon']}"
 
             tipo = random.choice(['Elevador', 'Escada_Rolante'])
             equipamento_id = f"{tipo}_{random.randint(1, 4)}"
@@ -62,6 +98,8 @@ def generate_dummy_data(filename, num_records=1500):
 
             writer.writerow([
                 timestamp,
+                estacao_nome,
+                geolocalizacao,
                 equipamento_id,
                 tipo,
                 vibracao,
