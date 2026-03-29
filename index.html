@@ -17,6 +17,10 @@
 </head>
 <body>
     <h1>Monitoramento de Sensores</h1>
+    <div id="file-upload-container" style="text-align: center; margin-bottom: 10px;">
+        <label for="csv-file"><b>Selecione o arquivo CSV local para ver os dados (se o mapa estiver vazio): </b></label>
+        <input type="file" id="csv-file" accept=".csv">
+    </div>
     <div id="map"></div>
     <div id="charts-wrapper">
         <h2 id="station-title">Selecione uma estação no mapa</h2>
@@ -40,18 +44,45 @@
         const quantVars = ['vibracao', 'temperatura', 'velocidade_corrente', 'torque', 'contagem_pessoas'];
         const qualVars = ['impacto', 'abertura_porta', 'posicao', 'desalinhamento', 'travamento', 'posicao_suspeita'];
 
+        // Tenta carregar automaticamente (funciona em servidor web)
         Papa.parse('dados_sensores_anomalias.csv', {
             download: true,
             header: true,
             dynamicTyping: true,
             skipEmptyLines: true,
             complete: function(results) {
-                globalData = results.data;
-                processMapPoints();
+                if (results.data && results.data.length > 0) {
+                    globalData = results.data;
+                    processMapPoints();
+                }
+            },
+            error: function(err) {
+                console.log("Falha ao carregar o CSV automaticamente. Por favor, use o botão de seleção de arquivo.");
             }
         });
 
+        // Event listener para carregar o arquivo manualmente (funciona localmente com duplo clique)
+        document.getElementById('csv-file').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                Papa.parse(file, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        globalData = results.data;
+                        processMapPoints();
+                    }
+                });
+            }
+        });
+
+        let mapMarkers = [];
+
         function processMapPoints() {
+            // Limpa os marcadores existentes
+            mapMarkers.forEach(marker => map.removeLayer(marker));
+            mapMarkers = [];
             const stations = {};
 
             globalData.forEach(row => {
@@ -70,11 +101,12 @@
 
             for (const [estacao, coords] of Object.entries(stations)) {
                 if (!isNaN(coords.lat) && !isNaN(coords.lng)) {
-                    L.marker([coords.lat, coords.lng]).addTo(map)
+                    const marker = L.marker([coords.lat, coords.lng]).addTo(map)
                         .bindPopup(`<b>${estacao}</b><br>Clique para ver os dados`)
                         .on('click', () => {
                             updateCharts(estacao);
                         });
+                    mapMarkers.push(marker);
                 }
             }
         }
