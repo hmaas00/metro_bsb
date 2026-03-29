@@ -5,9 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logs de Anomalias - Metrô DF</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
-        h1 { text-align: center; margin: 10px 0; }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #ffffff;
+        }
         .back-link { display: block; text-align: center; margin-bottom: 20px; }
+
+        #file-upload-container {
+            margin-bottom: 15px;
+            color: #aaaaaa;
+        }
+
+        #config-container {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 0 auto 30px auto;
+            max-width: 800px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            color: #e0e0e0;
+        }
+
+        .config-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .config-item label {
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #4db8ff;
+        }
+
+        .config-item select, .config-item input[type="range"] {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 5px;
+            border-radius: 4px;
+        }
 
         #logs-container {
             display: flex;
@@ -17,18 +69,19 @@
         }
 
         .log-card {
-            background-color: white;
-            border: 1px solid #ddd;
+            background-color: #1e1e1e;
+            border: 1px solid #333;
             border-radius: 8px;
             padding: 15px;
             width: 300px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+            color: #e0e0e0;
         }
 
         .log-card h3 {
             margin-top: 0;
-            color: #d9534f;
-            border-bottom: 1px solid #eee;
+            color: #ff6b6b;
+            border-bottom: 1px solid #333;
             padding-bottom: 5px;
             font-size: 1.1em;
         }
@@ -39,28 +92,71 @@
         }
 
         .log-field strong {
-            color: #333;
+            color: #4db8ff;
         }
 
         .trigger-reason {
             margin-top: 10px;
             font-size: 0.85em;
-            color: #666;
-            background: #fff3f3;
+            color: #ccc;
+            background: #2a2a2a;
             padding: 5px;
             border-radius: 4px;
+            border: 1px solid #444;
         }
     </style>
 </head>
 <body>
     <h1>Logs de Anomalias Detectadas</h1>
     <div class="back-link">
-        <a href="index.html" style="text-decoration: none; padding: 8px 12px; background-color: #6c757d; color: white; border-radius: 5px;">Voltar ao Mapa</a>
+        <a href="index.html" style="text-decoration: none; padding: 8px 12px; background-color: #333; color: white; border-radius: 5px; border: 1px solid #555;">Voltar ao Mapa</a>
     </div>
 
     <div id="file-upload-container" style="text-align: center; margin-bottom: 20px;">
         <label for="csv-file"><b>Selecione o arquivo CSV local para carregar os logs (se necessário): </b></label>
         <input type="file" id="csv-file" accept=".csv">
+    </div>
+
+    <div id="config-container">
+        <div class="config-item">
+            <label for="conf-travamento">Travamento</label>
+            <select id="conf-travamento">
+                <option value="sim" selected>Sim</option>
+                <option value="não">Não</option>
+                <option value="todos">Todos</option>
+            </select>
+        </div>
+        <div class="config-item">
+            <label for="conf-desalinhamento">Desalinhamento</label>
+            <select id="conf-desalinhamento">
+                <option value="severo_ou_critico" selected>Severo ou Crítico</option>
+                <option value="severo">Severo</option>
+                <option value="crítico">Crítico</option>
+                <option value="leve">Leve</option>
+                <option value="todos">Todos</option>
+            </select>
+        </div>
+        <div class="config-item">
+            <label for="conf-posicao">Posição Suspeita</label>
+            <select id="conf-posicao">
+                <option value="sim" selected>Sim</option>
+                <option value="não">Não</option>
+                <option value="todos">Todos</option>
+            </select>
+        </div>
+        <div class="config-item">
+            <label for="conf-porta">Abertura de Porta</label>
+            <select id="conf-porta">
+                <option value="forcada" selected>Forçada</option>
+                <option value="normal">Normal</option>
+                <option value="todos">Todos</option>
+            </select>
+        </div>
+        <div class="config-item">
+            <label for="conf-vibracao">Vibração ></label>
+            <input type="range" id="conf-vibracao" min="0" max="30" step="1" value="10" oninput="document.getElementById('vib-val').innerText = this.value">
+            <span id="vib-val" style="margin-top: 5px;">10</span>
+        </div>
     </div>
 
     <div id="logs-container">
@@ -72,6 +168,13 @@
 
     <script>
         let globalData = [];
+
+        // Attach event listeners to all config inputs to re-process logs when changed
+        document.getElementById('conf-travamento').addEventListener('change', processLogs);
+        document.getElementById('conf-desalinhamento').addEventListener('change', processLogs);
+        document.getElementById('conf-posicao').addEventListener('change', processLogs);
+        document.getElementById('conf-porta').addEventListener('change', processLogs);
+        document.getElementById('conf-vibracao').addEventListener('input', processLogs);
 
         // Load CSV via web server
         Papa.parse('dados_sensores_anomalias.csv', {
@@ -113,36 +216,64 @@
         function getAnomalies(row) {
             let anomalies = [];
 
-            // travamento=sim
-            if (row.travamento && String(row.travamento).trim().toLowerCase() === 'sim') {
-                anomalies.push('Travamento: Sim');
+            const confTravamento = document.getElementById('conf-travamento').value;
+            const confDesalinhamento = document.getElementById('conf-desalinhamento').value;
+            const confPosicao = document.getElementById('conf-posicao').value;
+            const confPorta = document.getElementById('conf-porta').value;
+            const confVibracao = parseFloat(document.getElementById('conf-vibracao').value);
+
+            // Travamento
+            if (confTravamento !== 'todos' && row.travamento) {
+                let travamento = String(row.travamento).trim().toLowerCase();
+                let confT = confTravamento === 'sim' ? 'sim' : 'não';
+                if (travamento === confT || travamento === confT.replace('ã', 'a')) {
+                    anomalies.push(`Travamento: ${row.travamento}`);
+                }
+            } else if (confTravamento === 'todos' && row.travamento) {
+                anomalies.push(`Travamento: ${row.travamento}`);
             }
 
-            // desalinhamento=severo ou critico
-            if (row.desalinhamento) {
+            // Desalinhamento
+            if (confDesalinhamento !== 'todos' && row.desalinhamento) {
                 let des = String(row.desalinhamento).trim().toLowerCase();
-                if (des === 'severo' || des === 'crítico' || des === 'critico') {
+                if (confDesalinhamento === 'severo_ou_critico') {
+                    if (des === 'severo' || des === 'crítico' || des === 'critico') {
+                        anomalies.push(`Desalinhamento: ${row.desalinhamento}`);
+                    }
+                } else if (des === confDesalinhamento || des === confDesalinhamento.replace('í', 'i')) {
                     anomalies.push(`Desalinhamento: ${row.desalinhamento}`);
                 }
+            } else if (confDesalinhamento === 'todos' && row.desalinhamento) {
+                anomalies.push(`Desalinhamento: ${row.desalinhamento}`);
             }
 
-            // posicao_suspeita=sim
-            if (row.posicao_suspeita && String(row.posicao_suspeita).trim().toLowerCase() === 'sim') {
-                anomalies.push('Posição Suspeita: Sim');
-            }
-
-            // abertura_porta=forcada
-            if (row.abertura_porta) {
-                let abertura = String(row.abertura_porta).trim().toLowerCase();
-                if (abertura === 'forçada' || abertura === 'forcada') {
-                    anomalies.push('Abertura da Porta: Forçada');
+            // Posicao
+            if (confPosicao !== 'todos' && row.posicao_suspeita) {
+                let pos = String(row.posicao_suspeita).trim().toLowerCase();
+                let confP = confPosicao === 'sim' ? 'sim' : 'não';
+                if (pos === confP || pos === confP.replace('ã', 'a')) {
+                    anomalies.push(`Posição Suspeita: ${row.posicao_suspeita}`);
                 }
+            } else if (confPosicao === 'todos' && row.posicao_suspeita) {
+                anomalies.push(`Posição Suspeita: ${row.posicao_suspeita}`);
             }
 
-            // vibracao>10
+            // Porta
+            if (confPorta !== 'todos' && row.abertura_porta) {
+                let porta = String(row.abertura_porta).trim().toLowerCase();
+                if (confPorta === 'forcada' && (porta === 'forçada' || porta === 'forcada')) {
+                    anomalies.push(`Abertura da Porta: ${row.abertura_porta}`);
+                } else if (confPorta === 'normal' && porta === 'normal') {
+                    anomalies.push(`Abertura da Porta: ${row.abertura_porta}`);
+                }
+            } else if (confPorta === 'todos' && row.abertura_porta) {
+                anomalies.push(`Abertura da Porta: ${row.abertura_porta}`);
+            }
+
+            // Vibracao
             if (row.vibracao !== null && row.vibracao !== undefined) {
                 let vib = parseFloat(row.vibracao);
-                if (!isNaN(vib) && vib > 10) {
+                if (!isNaN(vib) && vib > confVibracao) {
                     anomalies.push(`Vibração Elevada: ${row.vibracao}`);
                 }
             }
